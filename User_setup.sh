@@ -1,37 +1,52 @@
 #!/bin/bash
 
-# Prompt for the username
-read -p "Enter the username of the new user: " username
 
-# Create the new user
+HEADING_BLUE='\033[0;34m'  # ANSI escape code for blue text
+NC='\033[0m'  # ANSI escape code to reset to default text color
+
+echo -e "${HEADING_BLUE}-- User creation${NC}"
+read -p "Enter the username of the new user: " username
 adduser $username
 
-# Prompt for the user password
+echo -e "${HEADING_BLUE}-- User password change${NC}"
 passwd $username
 
-# Add the new user to the SSH user list
+echo -e "${HEADING_BLUE}-- Adding user to groups${NC}"
+echo "ssh"
 usermod -aG ssh $username
 
-# Generate SSH keys for 'root' and the new user
-ssh-keygen -t rsa -f /root/.ssh/id_rsa -N ""
-ssh-keygen -t rsa -f /home/$username/.ssh/id_rsa -N ""
+echo -e "${HEADING_BLUE}-- Generating SSH keys for root and new user${NC}"
+# Check the directories exist
+root_path="/root/.ssh/"
+if [ ! -d "$root_path" ]; then
+  mkdir "$root_path"
+fi
 
-# Set correct permissions for SSH keys
-chmod 700 /root/.ssh
-chmod 600 /root/.ssh/id_rsa
-chmod 600 /root/.ssh/id_rsa.pub
+user_path="/home/$username/.ssh"
+if [ ! -d "$user_path" ]; then
+  mkdir "$user_path"
+fi
 
-chmod 700 /home/$username/.ssh
-chmod 600 /home/$username/.ssh/id_rsa
-chmod 600 /home/$username/.ssh/id_rsa.pub
+# Generate keys
+ssh-keygen -t rsa -f $root_path/id_rsa -N ""
+ssh-keygen -t rsa -f $user_path/.ssh/id_rsa -N ""
+
+# Set the correct permissions
+chmod 700 $root_path
+chmod 600 $root_path/id_rsa
+chmod 600 $root_path/id_rsa.pub
+
+chmod 700 $user_path
+chmod 600 $user_path/id_rsa
+chmod 600 $user_path/id_rsa.pub
 
 # Copy keys to SSH directories
-cp /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys
-cp /home/$username/.ssh/id_rsa.pub /home/$username/.ssh/authorized_keys
+cp $root_path/id_rsa.pub $root_path/authorized_keys
+cp $user_path/id_rsa.pub $user_path/authorized_keys
 
 # Set ownership for the new user's .ssh folder and authorized_keys
-chown -R $username:$username /home/$username/.ssh
-chown $username:$username /home/$username/.ssh/authorized_keys
+chown -R $username:$username $user_path
+chown $username:$username $user_path/authorized_keys
 
 # Disable password authentication in the SSH config
 sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/g' /etc/ssh/sshd_config
