@@ -6,7 +6,7 @@ NC='\033[0m'  # ANSI escape code to reset to default text color
 
 echo -e "${HEADING_BLUE}-- User creation${NC}"
 read -p "Enter the username of the new user: " username
-adduser --home "/home/$username" --create-home $username
+adduser --home "/home/$username"
 
 echo -e "${HEADING_BLUE}-- Adding user to groups${NC}"
 echo "ssh"
