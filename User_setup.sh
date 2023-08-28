@@ -8,16 +8,16 @@ echo -e "${HEADING_BLUE}-- User creation${NC}"
 read -p "Enter the username of the new user: " username
 adduser $username
 
-echo -e "${HEADING_BLUE}-- User password change${NC}"
-passwd $username
-
 echo -e "${HEADING_BLUE}-- Adding user to groups${NC}"
 echo "ssh"
+if ! getent group ssh > /dev/null; then
+  groupadd ssh
+fi
 usermod -aG ssh $username
 
 echo -e "${HEADING_BLUE}-- Generating SSH keys for root and new user${NC}"
 # Check the directories exist
-root_path="/root/.ssh/"
+root_path="/root/.ssh"
 if [ ! -d "$root_path" ]; then
   mkdir "$root_path"
 fi
@@ -29,7 +29,7 @@ fi
 
 # Generate keys
 ssh-keygen -t rsa -f $root_path/id_rsa -N ""
-ssh-keygen -t rsa -f $user_path/.ssh/id_rsa -N ""
+ssh-keygen -t rsa -f $user_path/id_rsa -N ""
 
 # Set the correct permissions
 chmod 700 $root_path
